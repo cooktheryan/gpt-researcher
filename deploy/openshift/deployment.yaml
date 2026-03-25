@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gpt-researcher
+  labels:
+    app.kubernetes.io/name: gpt-researcher
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: gpt-researcher
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: gpt-researcher
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: gpt-researcher
+          image: quay.io/opendatahub/odh-gpt-researcher:latest
+          ports:
+            - containerPort: 8000
+              protocol: TCP
+          envFrom:
+            - secretRef:
+                name: gpt-researcher
+          env:
+            - name: LOGGING_LEVEL
+              value: INFO
+          volumeMounts:
+            - name: outputs
+              mountPath: /opt/app-root/src/outputs
+            - name: my-docs
+              mountPath: /opt/app-root/src/my-docs
+            - name: logs
+              mountPath: /opt/app-root/src/logs
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              cpu: "2"
+              memory: 4Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 30
+      volumes:
+        - name: outputs
+          persistentVolumeClaim:
+            claimName: gpt-researcher-outputs
+        - name: my-docs
+          persistentVolumeClaim:
+            claimName: gpt-researcher-my-docs
+        - name: logs
+          emptyDir: {}

@@ -1,0 +1,14 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Prerequisites:
+#   oc create secret generic gpt-researcher \
+#     --from-literal=OPENAI_API_KEY=<key> \
+#     --from-literal=TAVILY_API_KEY=<key> \
+#     --from-literal=OPENAI_BASE_URL=<url>   # optional
+
+resources:
+  - pvc-outputs.yaml
+  - pvc-my-docs.yaml
+  - deployment.yaml
+  - service.yaml
